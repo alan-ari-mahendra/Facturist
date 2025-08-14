@@ -518,15 +518,19 @@ export default function InvoiceGenerator() {
                     </Label>
                     <Input
                       id="usdToIdrRate"
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       className="border-slate-300 focus:border-purple-500 focus:ring-purple-500/20"
                       value={data.usdToIdrRate}
-                      onChange={(e) =>
-                        setData((prev) => ({
-                          ...prev,
-                          usdToIdrRate: Number(e.target.value),
-                        }))
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                          setData((prev) => ({
+                            ...prev,
+                            usdToIdrRate: value === "" ? 0 : Number(value),
+                          }));
+                        }
+                      }}
                     />
                   </div>
                 </div>
@@ -590,16 +594,20 @@ export default function InvoiceGenerator() {
                           Rate per Hour
                         </Label>
                         <Input
-                          type="number"
+                          type="text"
+                          inputMode="decimal"
                           className="border-slate-300 focus:border-indigo-500 focus:ring-indigo-500/20"
                           value={item.ratePerHour}
-                          onChange={(e) =>
-                            updateItem(
-                              item.id,
-                              "ratePerHour",
-                              Number(e.target.value)
-                            )
-                          }
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                              updateItem(
+                                item.id,
+                                "ratePerHour",
+                                value === "" ? 0 : Number(value)
+                              );
+                            }
+                          }}
                         />
                       </div>
                     </div>
@@ -641,15 +649,19 @@ export default function InvoiceGenerator() {
                   </Label>
                   <Input
                     id="taxPercentage"
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     className="border-slate-300 focus:border-slate-500 focus:ring-slate-500/20"
                     value={data.taxPercentage}
-                    onChange={(e) =>
-                      setData((prev) => ({
-                        ...prev,
-                        taxPercentage: Number(e.target.value),
-                      }))
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                        setData((prev) => ({
+                          ...prev,
+                          taxPercentage: value === "" ? 0 : Number(value),
+                        }));
+                      }
+                    }}
                   />
                 </div>
                 <div className="space-y-2 bg-slate-50 p-4 rounded-lg">

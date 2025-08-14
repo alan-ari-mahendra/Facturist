@@ -1,6 +1,8 @@
 "use client";
 
 import type React from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -106,10 +108,45 @@ export default function InvoiceGenerator() {
     }));
   };
 
-  const downloadPDF = () => {
-    // window.print();
-    if (saveToPDFRef.current) {
+  const downloadPDF = async () => {
+    if (!saveToPDFRef.current) return;
+
+    // Ambil elemen DOM
+    const element = saveToPDFRef.current;
+
+    // Convert elemen jadi canvas
+    const canvas = await html2canvas(element, {
+      scale: 2, // biar hasilnya tajam
+      useCORS: true,
+    });
+
+    // Convert canvas ke gambar
+    const imgData = canvas.toDataURL("image/png");
+
+    // Buat PDF
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    // Hitung skala agar pas ke halaman A4
+    const imgWidth = 210; // A4 width dalam mm
+    const pageHeight = 297; // A4 height dalam mm
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    // Kalau kontennya lebih dari 1 halaman
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
     }
+
+    // Download PDF
+    pdf.save(`invoice-${data.invoiceNumber || "draft"}.pdf`);
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -680,42 +717,91 @@ export default function InvoiceGenerator() {
               <CardContent className="p-6">
                 <div
                   ref={saveToPDFRef}
-                  className="bg-white p-8 shadow-lg rounded-lg border border-slate-200"
                   id="invoice-preview"
+                  style={{
+                    backgroundColor: "#ffffff",
+                    padding: "2rem",
+                    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                    borderRadius: "0.5rem",
+                    border: "1px solid rgb(226, 232, 240)",
+                  }}
                 >
                   {/* Header with Logo */}
-                  <div className="flex justify-between items-start mb-8">
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                      marginBottom: "2rem",
+                    }}
+                  >
                     <div>
                       {data.senderLogo && (
                         <img
                           src={data.senderLogo || "/placeholder.svg"}
                           alt="Logo"
-                          className="h-16 w-auto mb-4"
+                          style={{
+                            height: "4rem",
+                            width: "auto",
+                            marginBottom: "1rem",
+                          }}
                         />
                       )}
-                      <h1 className="text-3xl font-bold text-slate-800">
+                      <h1
+                        style={{
+                          fontSize: "1.875rem",
+                          fontWeight: "bold",
+                          color: "rgb(30, 41, 59)",
+                        }}
+                      >
                         INVOICE
                       </h1>
                     </div>
-                    <div className="text-right">
-                      <div className="text-lg font-semibold text-slate-800">
+                    <div style={{ textAlign: "right" }}>
+                      <div
+                        style={{
+                          fontSize: "1.125rem",
+                          fontWeight: 600,
+                          color: "rgb(30, 41, 59)",
+                        }}
+                      >
                         #{data.invoiceNumber}
                       </div>
-                      <div className="text-slate-600">{data.invoiceDate}</div>
+                      <div style={{ color: "rgb(71, 85, 105)" }}>
+                        {data.invoiceDate}
+                      </div>
                     </div>
                   </div>
 
                   {/* From/To Section */}
-                  <div className="grid grid-cols-2 gap-8 mb-8">
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "2rem",
+                      marginBottom: "2rem",
+                    }}
+                  >
+                    {/* From */}
                     <div>
-                      <h3 className="font-semibold text-slate-800 mb-2 pb-1 border-b-2 border-blue-600">
+                      <h3
+                        style={{
+                          fontWeight: 600,
+                          color: "rgb(30, 41, 59)",
+                          marginBottom: "0.5rem",
+                          paddingBottom: "0.25rem",
+                          borderBottom: "2px solid rgb(37, 99, 235)",
+                        }}
+                      >
                         From:
                       </h3>
-                      <div className="text-slate-700">
-                        <div className="font-medium text-slate-800">
+                      <div style={{ color: "rgb(51, 65, 85)" }}>
+                        <div
+                          style={{ fontWeight: 500, color: "rgb(30, 41, 59)" }}
+                        >
                           {data.senderCompany}
                         </div>
-                        <div className="whitespace-pre-line">
+                        <div style={{ whiteSpace: "pre-line" }}>
                           {data.senderAddress}
                         </div>
                         {data.senderPhone && (
@@ -729,15 +815,27 @@ export default function InvoiceGenerator() {
                         )}
                       </div>
                     </div>
+
+                    {/* To */}
                     <div>
-                      <h3 className="font-semibold text-slate-800 mb-2 pb-1 border-b-2 border-emerald-600">
+                      <h3
+                        style={{
+                          fontWeight: 600,
+                          color: "rgb(30, 41, 59)",
+                          marginBottom: "0.5rem",
+                          paddingBottom: "0.25rem",
+                          borderBottom: "2px solid rgb(5, 150, 105)",
+                        }}
+                      >
                         To:
                       </h3>
-                      <div className="text-slate-700">
-                        <div className="font-medium text-slate-800">
+                      <div style={{ color: "rgb(51, 65, 85)" }}>
+                        <div
+                          style={{ fontWeight: 500, color: "rgb(30, 41, 59)" }}
+                        >
                           {data.recipientCompany}
                         </div>
-                        <div className="whitespace-pre-line">
+                        <div style={{ whiteSpace: "pre-line" }}>
                           {data.recipientAddress}
                         </div>
                         {data.recipientPhone && (
@@ -751,42 +849,84 @@ export default function InvoiceGenerator() {
                   </div>
 
                   {/* Items Table */}
-                  <div className="mb-8">
-                    <table className="w-full border-collapse">
+                  <div style={{ marginBottom: "2rem" }}>
+                    <table
+                      style={{ width: "100%", borderCollapse: "collapse" }}
+                    >
                       <thead>
-                        <tr className="bg-gradient-to-r from-slate-100 to-slate-200">
-                          <th className="text-left py-3 px-4 font-semibold text-slate-800 border-b-2 border-slate-300">
-                            Project Name
-                          </th>
-                          <th className="text-right py-3 px-4 font-semibold text-slate-800 border-b-2 border-slate-300">
-                            Hours
-                          </th>
-                          <th className="text-right py-3 px-4 font-semibold text-slate-800 border-b-2 border-slate-300">
-                            Rate
-                          </th>
-                          <th className="text-right py-3 px-4 font-semibold text-slate-800 border-b-2 border-slate-300">
-                            Total
-                          </th>
+                        <tr
+                          style={{
+                            background:
+                              "linear-gradient(to right, rgb(241, 245, 249), rgb(226, 232, 240))",
+                          }}
+                        >
+                          {["Project Name", "Hours", "Rate", "Total"].map(
+                            (header) => (
+                              <th
+                                key={header}
+                                style={{
+                                  textAlign:
+                                    header === "Project Name"
+                                      ? "left"
+                                      : "right",
+                                  padding: "0.75rem 1rem",
+                                  fontWeight: 600,
+                                  color: "rgb(30, 41, 59)",
+                                  borderBottom: "2px solid rgb(203, 213, 225)",
+                                }}
+                              >
+                                {header}
+                              </th>
+                            )
+                          )}
                         </tr>
                       </thead>
                       <tbody>
                         {data.items.map((item, index) => (
                           <tr
                             key={item.id}
-                            className={`border-b border-slate-200 ${
-                              index % 2 === 0 ? "bg-slate-50/50" : "bg-white"
-                            }`}
+                            style={{
+                              borderBottom: "1px solid rgb(226, 232, 240)",
+                              backgroundColor:
+                                index % 2 === 0
+                                  ? "rgba(248, 250, 252, 0.5)"
+                                  : "rgb(255, 255, 255)",
+                            }}
                           >
-                            <td className="py-3 px-4 text-slate-700">
+                            <td
+                              style={{
+                                padding: "0.75rem 1rem",
+                                color: "rgb(51, 65, 85)",
+                              }}
+                            >
                               {item.projectName}
                             </td>
-                            <td className="text-right py-3 px-4 text-slate-700">
+                            <td
+                              style={{
+                                textAlign: "right",
+                                padding: "0.75rem 1rem",
+                                color: "rgb(51, 65, 85)",
+                              }}
+                            >
                               {item.totalHours}
                             </td>
-                            <td className="text-right py-3 px-4 text-slate-700">
+                            <td
+                              style={{
+                                textAlign: "right",
+                                padding: "0.75rem 1rem",
+                                color: "rgb(51, 65, 85)",
+                              }}
+                            >
                               {formatCurrency(item.ratePerHour)}
                             </td>
-                            <td className="text-right py-3 px-4 font-medium text-slate-800">
+                            <td
+                              style={{
+                                textAlign: "right",
+                                padding: "0.75rem 1rem",
+                                fontWeight: 500,
+                                color: "rgb(30, 41, 59)",
+                              }}
+                            >
                               {formatCurrency(item.totalPrice)}
                             </td>
                           </tr>
@@ -796,24 +936,67 @@ export default function InvoiceGenerator() {
                   </div>
 
                   {/* Totals */}
-                  <div className="flex justify-end mb-8">
-                    <div className="w-64 bg-slate-50 p-4 rounded-lg border border-slate-200">
-                      <div className="flex justify-between py-2 text-slate-700">
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      marginBottom: "2rem",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "16rem",
+                        backgroundColor: "rgb(248, 250, 252)",
+                        padding: "1rem",
+                        borderRadius: "0.5rem",
+                        border: "1px solid rgb(226, 232, 240)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          padding: "0.5rem 0",
+                          color: "rgb(51, 65, 85)",
+                        }}
+                      >
                         <span>Subtotal:</span>
-                        <span className="font-medium">
+                        <span style={{ fontWeight: 500 }}>
                           {formatCurrency(subtotal)}
                         </span>
                       </div>
-                      <div className="flex justify-between py-2 text-slate-700">
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          padding: "0.5rem 0",
+                          color: "rgb(51, 65, 85)",
+                        }}
+                      >
                         <span>Tax ({data.taxPercentage}%):</span>
-                        <span className="font-medium">
+                        <span style={{ fontWeight: 500 }}>
                           {formatCurrency(taxAmount)}
                         </span>
                       </div>
-                      <div className="border-t-2 border-slate-300 pt-2 mt-2">
-                        <div className="flex justify-between font-bold text-lg">
-                          <span className="text-slate-800">Total:</span>
-                          <span className="text-emerald-600">
+                      <div
+                        style={{
+                          borderTop: "2px solid rgb(203, 213, 225)",
+                          paddingTop: "0.5rem",
+                          marginTop: "0.5rem",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            fontWeight: "bold",
+                            fontSize: "1.125rem",
+                          }}
+                        >
+                          <span style={{ color: "rgb(30, 41, 59)" }}>
+                            Total:
+                          </span>
+                          <span style={{ color: "rgb(5, 150, 105)" }}>
                             {formatCurrency(total)}
                           </span>
                         </div>
@@ -823,26 +1006,45 @@ export default function InvoiceGenerator() {
 
                   {/* Payment Details */}
                   {(data.bankAccount || data.accountName || data.bankName) && (
-                    <div className="border-t border-slate-200">
-                      <h3 className="font-semibold text-slate-800 mb-2 pb-1 border-b-2 border-amber-600">
+                    <div style={{ borderTop: "1px solid rgb(226, 232, 240)" }}>
+                      <h3
+                        style={{
+                          fontWeight: 600,
+                          color: "rgb(30, 41, 59)",
+                          marginBottom: "0.5rem",
+                          paddingBottom: "0.25rem",
+                          borderBottom: "2px solid rgb(217, 119, 6)",
+                        }}
+                      >
                         Payment Details:
                       </h3>
-                      <div className="text-slate-700 bg-amber-50 p-4 rounded-lg">
+                      <div
+                        style={{
+                          color: "rgb(51, 65, 85)",
+                          backgroundColor: "rgb(255, 251, 235)",
+                          padding: "1rem",
+                          borderRadius: "0.5rem",
+                        }}
+                      >
                         {data.bankName && (
                           <div>
-                            <span className="font-medium">Bank:</span>{" "}
+                            <span style={{ fontWeight: 500 }}>Bank:</span>{" "}
                             {data.bankName}
                           </div>
                         )}
                         {data.accountName && (
                           <div>
-                            <span className="font-medium">Account Name:</span>{" "}
+                            <span style={{ fontWeight: 500 }}>
+                              Account Name:
+                            </span>{" "}
                             {data.accountName}
                           </div>
                         )}
                         {data.bankAccount && (
                           <div>
-                            <span className="font-medium">Account Number:</span>{" "}
+                            <span style={{ fontWeight: 500 }}>
+                              Account Number:
+                            </span>{" "}
                             {data.bankAccount}
                           </div>
                         )}

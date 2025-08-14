@@ -50,19 +50,6 @@ export default function InvoiceGenerator() {
   const [data, setData] = useState<InvoiceData>(initialData);
   const saveToPDFRef = useRef(null);
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem("invoice-draft");
-    if (saved) {
-      try {
-        setData(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to load saved draft");
-      }
-    }
-  }, []);
-
-  // Calculate totals
   const subtotal = data.items.reduce((sum, item) => sum + item.totalPrice, 0);
   const taxAmount = subtotal * (data.taxPercentage / 100);
   const total = subtotal - taxAmount;
@@ -111,24 +98,19 @@ export default function InvoiceGenerator() {
   const downloadPDF = async () => {
     if (!saveToPDFRef.current) return;
 
-    // Ambil elemen DOM
     const element = saveToPDFRef.current;
 
-    // Convert elemen jadi canvas
     const canvas = await html2canvas(element, {
-      scale: 2, // biar hasilnya tajam
+      scale: 2,
       useCORS: true,
     });
 
-    // Convert canvas ke gambar
     const imgData = canvas.toDataURL("image/png");
 
-    // Buat PDF
     const pdf = new jsPDF("p", "mm", "a4");
 
-    // Hitung skala agar pas ke halaman A4
-    const imgWidth = 210; // A4 width dalam mm
-    const pageHeight = 297; // A4 height dalam mm
+    const imgWidth = 210;
+    const pageHeight = 297;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
     let heightLeft = imgHeight;
@@ -137,7 +119,6 @@ export default function InvoiceGenerator() {
     pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
     heightLeft -= pageHeight;
 
-    // Kalau kontennya lebih dari 1 halaman
     while (heightLeft > 0) {
       position = heightLeft - imgHeight;
       pdf.addPage();
@@ -145,7 +126,6 @@ export default function InvoiceGenerator() {
       heightLeft -= pageHeight;
     }
 
-    // Download PDF
     pdf.save(`invoice-${data.invoiceNumber || "draft"}.pdf`);
   };
 

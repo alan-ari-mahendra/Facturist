@@ -23,19 +23,19 @@ import { InvoiceData, InvoiceItem } from "@/types/invoice.type";
 import { hoursToDecimal } from "@/lib/utils";
 
 const initialData: InvoiceData = {
-  senderCompany: "",
-  senderAddress: "",
-  senderPhone: "",
-  senderEmail: "",
-  senderWebsite: "",
-  senderLogo: "",
+  senderCompany: "Bratamedia",
+  senderAddress: "Jl. Tanjungsari I No.18 Sumurboto, Kec. Banyumanik",
+  senderPhone: "0895342001544",
+  senderEmail: "bratamedia@gmail.com",
+  senderWebsite: "https://bratamedia.com",
+  senderLogo: "/base-logo-brata.png",
   recipientCompany: "",
   recipientAddress: "",
   recipientPhone: "",
   recipientEmail: "",
-  bankAccount: "",
-  accountName: "",
-  bankName: "",
+  bankAccount: "8165148653",
+  accountName: "A.N REZA ADITYA N",
+  bankName: "BCA",
   invoiceNumber: "",
   invoiceDate: new Date().toISOString().split("T")[0],
   currency: "USD",
@@ -148,7 +148,10 @@ export default function InvoiceGenerator() {
       return `$${amount.toFixed(2)}`;
     } else {
       const idrAmount = amount * data.usdToIdrRate;
-      return `Rp ${idrAmount.toLocaleString("id-ID")}`;
+      return `Rp ${idrAmount.toLocaleString("id-ID", {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      })}`;
     }
   };
 
@@ -852,7 +855,7 @@ export default function InvoiceGenerator() {
                               "linear-gradient(to right, rgb(241, 245, 249), rgb(226, 232, 240))",
                           }}
                         >
-                          {["Project Name", "Hours", "Rate", "Total"].map(
+                          {["Project Name", "Hours", "Total"].map(
                             (header) => (
                               <th
                                 key={header}
@@ -902,7 +905,7 @@ export default function InvoiceGenerator() {
                             >
                               {item.totalHours}
                             </td>
-                            <td
+                            {/* <td
                               style={{
                                 textAlign: "right",
                                 padding: "0.75rem 1rem",
@@ -910,7 +913,7 @@ export default function InvoiceGenerator() {
                               }}
                             >
                               {formatCurrency(item.ratePerHour)}
-                            </td>
+                            </td> */}
                             <td
                               style={{
                                 textAlign: "right",
@@ -944,6 +947,19 @@ export default function InvoiceGenerator() {
                         border: "1px solid rgb(226, 232, 240)",
                       }}
                     >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          padding: "0.5rem 0",
+                          color: "rgb(51, 65, 85)",
+                        }}
+                      >
+                        <span>USD to IDR Rate:</span>
+                        <span style={{ fontWeight: 500 }}>
+                          Rp. {data.usdToIdrRate.toLocaleString("id-ID")}
+                        </span>
+                      </div>
                       <div
                         style={{
                           display: "flex",
